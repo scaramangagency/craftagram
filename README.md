@@ -60,7 +60,43 @@ For example, this would run the token refresh every month
 0 0 1 * * /usr/bin/wget -q https://www.yourwebsite.com/actions/craftagram/default/refresh-token >/dev/null 2>&1
 ```
 
-If you fail to set up the cron, you can still refresh the token manaully, by going to the settings page, clicking the `Authorise Craft` and following the steps outlined above.
+You can also skip triggering the refresh over HTTP and call the CLI command `craft craftagram/token`.
+
+Which in cron can be configured as: 
+
+```
+0 0 1 * * php /path/to/your/code/craft craftagram/token >/dev/null 2>&1
+```
+
+#### Multi-site setup
+In a multi-site setup it is possible to configure different Instagram apps per domain. This also means the refresh of tokens needs to be configured different from a single site Craft CMS setup.
+
+The examples assume that two sites are configured, as follows:
+
+|ID|Domain
+|---|---
+| 1  |www.example.com
+| 2  |bar.example.com
+
+The refresh action will use the Craft CMS current site logic to determine for which site to refresh the token.
+
+So for example when refreshing your sites with the domains "www.example.com" and "bar.example.com" over the HTTP refresh action use:
+
+```
+0 0 1 * * /usr/bin/wget -q https://www.example.com/actions/craftagram/default/refresh-token >/dev/null 2>&1
+
+0 0 1 * * /usr/bin/wget -q https://bar.example.com/actions/craftagram/default/refresh-token >/dev/null 2>&1
+```
+
+The console command accepts a site ID as first argument. So to fresh both "www.example.com" and "bar.example.com" use:
+
+```
+0 0 1 * * php /path/to/your/code/craft craftagram/token 1 >/dev/null 2>&1
+
+0 0 1 * * php /path/to/your/code/craft craftagram/token 2 >/dev/null 2>&1
+```
+
+If you fail to set up the cron, you can still refresh the token manually, by going to the settings page, clicking the `Authorise Craft` and following the steps outlined above.
 
 > :warning: You cannot refresh access tokens for private Instagram accounts, so ensure the account used in your tester invite above is public
 

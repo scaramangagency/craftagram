@@ -12,7 +12,6 @@ namespace scaramangagency\craftagram\controllers;
 
 use craft\helpers\App;
 use scaramangagency\craftagram\Craftagram;
-use scaramangagency\craftagram\services\CraftagramService;
 
 use Craft;
 use craft\web\Controller;
@@ -38,14 +37,20 @@ class DefaultController extends Controller {
 
     // Public Methods
     // =========================================================================
-    
+
     /**
-     * Refresh the instragram token
+     * Refresh the instagram token
      *
      * @return bool
      */
     public function actionRefreshToken() {
-        return Craftagram::$plugin->craftagramService->refreshToken();
+        $siteId = Craft::$app->getSites()->getCurrentSite()->id;
+
+        return Craftagram::$plugin
+            ->craftagramService
+            ->refreshToken(
+                (int) $siteId
+            );
     }
 
     /**
@@ -68,7 +73,7 @@ class DefaultController extends Controller {
      */
     public function actionAuth() {
         $url = parse_url(rtrim(App::parseEnv(Craft::$app->sites->primarySite->baseUrl), '/') . $_SERVER['REQUEST_URI']);
-        parse_str($url['query'], $params); 
+        parse_str($url['query'], $params);
         $code = $params['code'];
         $siteId = $params['state'];
 
