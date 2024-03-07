@@ -54,10 +54,16 @@ Instagram may challenge you with a login screen, so handle that, then click 'Aut
 
 Instagram tokens expire in 60 days, so you'll need to set up a cron job to keep the token alive. The refresh action is `actions/craftagram/default/refresh-token`.
 
-For example, this would run the token refresh every month
+For example, this would run the token refresh every month, for all enabled sites with tokens
 
 ```
 0 0 1 * * /usr/bin/wget -q https://www.yourwebsite.com/actions/craftagram/default/refresh-token >/dev/null 2>&1
+```
+
+If you just want to update a single site you can add the optional param `siteId`
+
+```
+0 0 1 * * /usr/bin/wget -q https://www.yourwebsite.com/actions/craftagram/default/refresh-token?siteId=<your siteId> >/dev/null 2>&1
 ```
 
 If you fail to set up the cron, you can still refresh the token manaully, by going to the settings page, clicking the `Authorise Craft` and following the steps outlined above.

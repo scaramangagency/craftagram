@@ -37,13 +37,21 @@ class DefaultController extends Controller {
 
     // Public Methods
     // =========================================================================
-    
+
     /**
-     * Refresh the instragram token
+     * Refresh the instragram token for all enabled sites
+     * or for a specific one if param siteId is given
      *
-     * @return bool
+     * @param  integer $siteId siteId to refresh the long access token for
+     * @return bool true if successful, otherwise false
      */
     public function actionRefreshToken() {
+        $siteId = Craft::$app->getRequest()->getParam('siteId', null);
+
+        if ($siteId) {
+            return Craftagram::$plugin->craftagramService->refreshTokenForSiteId((int) $siteId);
+        }
+
         return Craftagram::$plugin->craftagramService->refreshToken();
     }
 
@@ -53,7 +61,7 @@ class DefaultController extends Controller {
      * @return Response
      */
     public function actionHandleAuth($site_id, $client_id) {
-        $url = rtrim(Craft::parseEnv(Craft::$app->sites->primarySite->baseUrl), '/'); 
+        $url = rtrim(Craft::parseEnv(Craft::$app->sites->primarySite->baseUrl), '/');
         $appId = Craft::parseEnv($client_id);
 
         Craft::$app->getResponse()->redirect('https://api.instagram.com/oauth/authorize?client_id='.$appId.'&scope=user_profile,user_media&response_type=code&redirect_uri='.$url.'/actions/craftagram/default/auth&state='.$site_id)->send();
@@ -66,8 +74,8 @@ class DefaultController extends Controller {
      * @return Response|null
      */
     public function actionAuth() {
-        $url = parse_url(rtrim(Craft::parseEnv(Craft::$app->sites->primarySite->baseUrl), '/') . $_SERVER['REQUEST_URI']); 
-        parse_str($url['query'], $params); 
+        $url = parse_url(rtrim(Craft::parseEnv(Craft::$app->sites->primarySite->baseUrl), '/') . $_SERVER['REQUEST_URI']);
+        parse_str($url['query'], $params);
         $code = $params['code'];
         $siteId = $params['state'];
 

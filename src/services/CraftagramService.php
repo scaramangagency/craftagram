@@ -32,7 +32,7 @@ class CraftagramService extends Component {
             'craftagramSiteId' => $siteId
         ];
 
-        $longAccessTokenRecord = SettingsRecord::findOne($params); 
+        $longAccessTokenRecord = SettingsRecord::findOne($params);
 
         if (!$longAccessTokenRecord) {
             Craftagram::$plugin->log('An access token has not been obtained from Instagram');
@@ -57,7 +57,7 @@ class CraftagramService extends Component {
             'craftagramSiteId' => $siteId
         ];
 
-        $isSecured = SettingsRecord::findOne($params); 
+        $isSecured = SettingsRecord::findOne($params);
 
         if (!$isSecured) {
             Craftagram::$plugin->log('This site does not have a linked instagram account');
@@ -68,44 +68,66 @@ class CraftagramService extends Component {
     }
 
     /**
-     * Loop sites and refresh tokens
+     * Loop all enabled sites and refresh long access tokens
      *
-     * @return bool
+     * @return bool true if refreshs where successful, otherwise false
      */
     public function refreshToken() {
         $siteIds = Craft::$app->sites->getAllSiteIds();
 
-        
+        $allRefreshsSuccessful = true;
+
         foreach ($siteIds as $siteId) {
-            $longAccessTokenRecord = Craftagram::$plugin->craftagramService->getLongAccessTokenSetting($siteId);
-    
-            if (!$longAccessTokenRecord) {
-                return false;
+            if (!$this->refreshTokenForSiteId($siteId)) {
+                $allRefreshsSuccessful = false;
             }
-    
-            $ch = curl_init();
-            
-            $params = [
-                'access_token' => $longAccessTokenRecord,
-                'grant_type' => 'ig_refresh_token'
-            ];
-    
-            curl_setopt($ch, CURLOPT_URL,'https://graph.instagram.com/refresh_access_token?'.http_build_query($params));
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-    
-            $res = curl_exec($ch);
-            curl_close($ch);
-    
-            try {
-                $expires = json_decode($res)->expires_in;
-                Craftagram::$plugin->log('Successfully refreshed authentication token. Expires in ' . $expires);
-            } catch (Exception $e) {
-                Craftagram::$plugin->log('Failed to refresh authentication token. Error: ' . $res, LogLevel:ERROR);
-            }
-    
-            return true;
         }
+
+        return $allRefreshsSuccessful;
+    }
+
+    /**
+     * Refresh the long access token for a given SiteId,
+     * by sending a curl request to the Instagram API.
+     *
+     * If no longAccessRecord is found for the given siteId
+     * we don't bother the API.
+     *
+     * @param  integer $siteId siteId to refresh the long access token for
+     * @return bool true if extend was successful, otherwise false
+     */
+    public function refreshTokenForSiteId(int $siteId) {
+
+        $longAccessTokenRecord = Craftagram::$plugin->craftagramService->getLongAccessTokenSetting($siteId);
+
+        if (!$longAccessTokenRecord) {
+            return false;
+        }
+
+        $ch = curl_init();
+
+        $params = [
+            'access_token' => $longAccessTokenRecord,
+            'grant_type' => 'ig_refresh_token'
+        ];
+
+        curl_setopt($ch, CURLOPT_URL,'https://graph.instagram.com/refresh_access_token?'.http_build_query($params));
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+
+        $res = curl_exec($ch);
+        curl_close($ch);
+
+        try {
+            $expires = json_decode($res)->expires_in;
+            Craftagram::$plugin->log('Successfully refreshed authentication token. Expires in ' . $expires);
+        } catch (Exception $e) {
+            Craftagram::$plugin->log('Failed to refresh authentication token. Error: ' . $res, LogLevel:ERROR);
+            return false;
+        }
+
+        return true;
+
     }
 
     /**
@@ -144,7 +166,7 @@ class CraftagramService extends Component {
 
     /**
      * Get long access token from instagram and save it
-     * 
+     *
      * @return string
      */
     public function getLongAccessToken($shortAccessToken, $siteId, $secret) {
@@ -177,15 +199,15 @@ class CraftagramService extends Component {
             $longAccessTokenRecord->setAttribute('longAccessToken', $token);
             $longAccessTokenRecord->save();
         }
-        
+
         return $token;
     }
 
     /**
      * Get instagram feed
-     * 
+     *
      * @return string|null
-     */    
+     */
     public function getInstagramFeed($limit, $siteId, $after) {
 
         if ($siteId == 0) {
@@ -206,7 +228,7 @@ class CraftagramService extends Component {
             'limit' => $limit
         ];
 
-        
+
         if ($after != '') {
             $params['after'] = $after;
         }
@@ -223,13 +245,13 @@ class CraftagramService extends Component {
         if (!isset($res->data)) {
             Craftagram::$plugin->log('Failed to get data. Response from Instagram: ' . json_encode($res));
         }
-        
+
         return (isset($res->data) ? $res : null);
     }
 
     /**
      * Get instagram feed
-     * 
+     *
      * @return mixed
      */
     public function handleAuthentication()
@@ -255,9 +277,9 @@ class CraftagramService extends Component {
 
     /**
      * Get profile information
-     * 
+     *
      * @return string|null
-     */ 
+     */
     public function getProfileMeta($username) {
         try {
 
@@ -272,7 +294,7 @@ class CraftagramService extends Component {
             curl_close($ch);
 
             $res = json_decode($res);
-            
+
             $meta = null;
 
             if (isset($res->graphql)) {
@@ -294,5 +316,5 @@ class CraftagramService extends Component {
         }
     }
 
-    
+
 }

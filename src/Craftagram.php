@@ -60,7 +60,7 @@ class Craftagram extends Plugin {
      * @var bool
      */
     public bool $hasCpSection = true;
-    
+
     /**
      * @var bool
      */
@@ -87,7 +87,7 @@ class Craftagram extends Plugin {
         );
 
         Event::on(
-            UrlManager::class, 
+            UrlManager::class,
             UrlManager::EVENT_REGISTER_CP_URL_RULES,
             function(RegisterUrlRulesEvent $event) {
                 $event->rules = array_merge($event->rules, [
